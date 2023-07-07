@@ -171,7 +171,7 @@ app.layout = html.Div(
             html.Br(),
 
         ], 
-        style= {'width' : '100%'}
+        style= {'width' : '100%',"font-family": "IBM Plex Sans"}
     )
 
 

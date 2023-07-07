@@ -106,7 +106,8 @@ app.layout = html.Div([
     html.Br(),
     html.Br(),
     html.Br(), 
-])
+],style= {'width' : '100%',"font-family": "IBM Plex Sans"}
+)
 
 def list_ID(search):
     id = []
