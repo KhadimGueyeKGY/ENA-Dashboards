@@ -27,5 +27,5 @@ docker exec -it ena-datahub-dashboard bash
 
 ## view
 
-  * http://127.0.0.1:8000/ena-data-dashboard/ 
+  * http://127.0.0.1:8000/ena-datahub-dashboard/ 
 
