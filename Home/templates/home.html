@@ -1,0 +1,37 @@
+{% load static %}
+{% load plotly_dash %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Data Hubs Dashboard</title>
+    <link rel="stylesheet" href="{% static 'outer.css' %}">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <script>
+        function toggleSubMenu() {
+          var submenu = document.getElementById("submenu");
+          if (submenu.style.display === "none") {
+            submenu.style.display = "block";
+          } else {
+            submenu.style.display = "none";
+          }
+        }
+      </script>
+</head>
+<body>
+    <div id="dash-container">
+        {% plotly_app_bootstrap name="ena_datahub_dashboard" %}
+    </div>
+    <div class="menu">
+        <ul>
+          <li onclick="toggleSubMenu()"><a href='#' ><img src="/static/menu.png" alt="Menu" width="20" height="20">&nbsp;&nbsp;&nbsp;<strong>ENA Dashboards</strong></a>
+            <ul id="submenu" class="submenu">
+              <li style="color: darkgreen;">Datahub Dashboard (L)</li>
+              <li><a href="/ena-cohort-dashboard/">Cohort Dashboard</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+</body>
+
+</html>

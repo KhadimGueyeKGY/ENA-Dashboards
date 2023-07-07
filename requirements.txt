@@ -1,0 +1,7 @@
+dash
+pandas
+django_plotly_dash
+dash-html-components
+dash-bootstrap-components
+requests
+matplotlib
