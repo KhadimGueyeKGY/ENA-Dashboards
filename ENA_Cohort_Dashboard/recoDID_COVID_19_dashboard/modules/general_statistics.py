@@ -8,6 +8,7 @@ import pandas as pd
 #from modules.header import Header
 import plotly.graph_objects as go
 import json
+import requests
 #from upsetplot import from_contents , UpSet
 #from venn import venn
 #import matplotlib.pyplot as plt
@@ -23,6 +24,8 @@ class General_Statistics:
     T_cell = ' '.join([str(i) for i in [list(f[6]),list(f[7]),list(f[8]),list(f[9]),list(f[10])]])
     Antibody_profile = ' '.join([str(i) for i in [list(f[11]),list(f[12]),list(f[13]),list(f[14]),list(f[15]),list(f[16])]])
     ENA_SARS_CoV_2_records = ' '.join([str(i) for i in [list(f[17]),list(f[18]),list(f[19]),list(f[20])]])
+    External_Links_type = {}
+
 
     def distribution_of_biosamples(data,lt_id):
         ega = 0
@@ -36,14 +39,19 @@ class General_Statistics:
             #if lt_id_str.find(str(item['accession'])) != -1 :
             if General_Statistics.EGA.find(str(item["accession"] )) != -1 :
                 ega += 1
+                General_Statistics.External_Links_type[str(item["accession"] )] = 'EGA Dataset' 
             elif General_Statistics.B_cell.find(str(item["accession"] )) != -1 :
                 bcell += 1
+                General_Statistics.External_Links_type[str(item["accession"] )] = 'B Cell' 
             elif General_Statistics.T_cell.find(str(item["accession"] )) != -1 :
                 tcell +=1 
+                General_Statistics.External_Links_type[str(item["accession"] )] = 'T Cell' 
             elif General_Statistics.Antibody_profile.find(str(item["accession"] )) != -1 :
                 antibody +=1
+                General_Statistics.External_Links_type[str(item["accession"] )] = 'Antibody Profile' 
             elif General_Statistics.ENA_SARS_CoV_2_records.find(str(item["accession"] )) != -1 :
                 ena +=1
+                General_Statistics.External_Links_type[str(item["accession"] )] = 'ENA SARS CoV-2 records' 
             else : 
                 non += 1
         val1 =[ega,bcell,tcell,antibody,ena,non]
@@ -212,11 +220,25 @@ class General_Statistics:
 
         return fig
 
+    # for the external link - Relationships
+    def External_Links (id):
+        a = General_Statistics.External_Links_type[str(id)]
+        if a != '':
+            url = 'https://www.ebi.ac.uk/biosamples/samples/'+id+'.json'
+            response = requests.get(url)
+            dt = response.json()
+            if 'externalReferences' in dt:
+                link = dt['externalReferences'][0]['url']
+            res = f"[{a}]({link})"
+        return res
+
+
 
     def Relationships(data, lt_id):
         Source = []
         Type = []
         Target = []
+        ExternalLinks = []
         lt_id_str = ' '.join(lt_id)
         for item in data:
             if lt_id_str.find(str(item['accession'])) != -1:
@@ -225,11 +247,13 @@ class General_Statistics:
                         Source.append(f"[{items['source']}](https://www.ebi.ac.uk/biosamples/samples/{items['source']})")
                         Type.append(items['type'])
                         Target.append(f"[{items['target']}](https://www.ebi.ac.uk/biosamples/samples/{items['target']})")
+                        ExternalLinks.append(General_Statistics.External_Links(items['source']))
                 else:
                     Source.append(' - ')
                     Type.append(' - ')
+                    ExternalLinks.append(' - ')
                     Target.append(f"[{item['accession']}](https://www.ebi.ac.uk/biosamples/samples/{item['accession']})")
-        dta = pd.DataFrame({'Source': Source, 'Type': Type, 'Target': Target})
+        dta = pd.DataFrame({'Source': Source,'External Links' : ExternalLinks, 'Type': Type, 'Target': Target})
        
 
         # Generate alternating row colors based on target IDs
@@ -251,6 +275,7 @@ class General_Statistics:
             id='table',
             columns=[
                 {'name': 'Source', 'id': 'Source', 'type': 'text', 'presentation': 'markdown'},
+                {'name': 'External Links', 'id': 'External Links', 'type': 'text', 'presentation': 'markdown'},
                 {'name': 'Type', 'id': 'Type', 'type': 'text', 'presentation': 'markdown'},
                 {'name': 'Target', 'id': 'Target', 'type': 'text', 'presentation': 'markdown'}
             ],
