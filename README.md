@@ -1,4 +1,6 @@
-# ena-datahub-dashboard
+# ENA Dashboards
+ * ENA-Datahub-Dashboard (default)
+ * ENA-Cohort-Dashboard
 
 ## Usage: 
 ```
