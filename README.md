@@ -15,7 +15,7 @@ python manage.py runserver
 
 ```
 
-## Docker commands  (ongoing)
+## Docker commands 
 
 ```
 docker build -t khadimgueyekgy/ena-datahub-dashboard .
