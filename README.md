@@ -20,7 +20,7 @@ python manage.py runserver
 
 ```
 docker build -t ena-dashboards .
-docker run --rm -it -p 8000:8000 --name ena-dashboards
+docker run --rm -it -p 8000:8000  ena-dashboards
 
 ```
 
