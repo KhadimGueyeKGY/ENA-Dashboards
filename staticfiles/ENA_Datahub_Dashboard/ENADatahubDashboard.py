@@ -1,0 +1,231 @@
+from dash import Dash, dcc, html, Input, Output, callback
+from django_plotly_dash import DjangoDash
+import dash_bootstrap_components as dbc
+import pandas as pd
+from packages.geo import geoM
+from packages.General_statistics import generalStatistics
+from packages.data_prep import GetData
+import os
+from datetime import datetime, timedelta
+
+##  data preparation 
+
+
+
+username , password = GetData.authentication()
+data_analysis , data_read_run = GetData.main (username , password)
+
+#data_analysis = pd.read_csv('packages/data/dcc_schubert_ENA_Search_analysis.csv')
+#data_analysis = data_analysis.fillna('-1')
+#data_read_run = pd.read_csv('packages/data/dcc_schubert_ENA_Search_read_run.csv',low_memory=False)
+#data_read_run = data_read_run.fillna('-1')
+
+#### header
+def header():
+   
+   res = html.Div([
+        html.H1(children=[html.Strong("Data Hub Dashboard")]),
+         html.H3(html.Strong(children=' {} '.format(username))),
+          html.P(children=[html.Em("This dashboard presents information related to your data hub." )]),
+   ] ,  className="header-container",
+   style ={'width':'100%', 'text-align':'center', 'background-color': '#18974C', 'padding-top': '1%','padding-botton':'1%','display': 'flex','flex-direction': 'column'}
+   )
+
+   return res
+
+####
+def statistics ():
+    stats_r = {}
+    stats_a = {}
+    # run statistics 
+    stats_r['Total raw sequence datasets'] = len(data_read_run)
+    stats_r['Total sequencing platforms'] = data_read_run['instrument_platform'].nunique()
+    stats_r['Total sequencing platform models'] = data_read_run['instrument_model'].nunique()
+    stats_r['Data Providers (Collaborators)'] = data_read_run['center_name'].nunique()
+
+    # analysis statistics
+    stats_a['Total analyses'] =  len(data_analysis)
+    stats_a['Analysis pipelines'] = data_analysis['pipeline_name'].nunique()
+
+    res =html.Div(
+        html.Div([
+        dbc.Row(
+        [
+                dbc.Col(
+                    [
+                        html.H2( html.Strong(value)),
+                        html.P(key)
+                    ],
+                    width=3
+                )
+                for key, value in stats_r.items()
+            ],
+            style={'width':'50%','margin-left':'25%','text-align':'center'}
+        ),
+        dbc.Row(
+        [
+                dbc.Col(
+                    [
+                        html.H4(html.Strong(value)),
+                        html.P(key)
+                    ],
+                    width=6
+                )
+                for key, value in stats_a.items()
+            ],
+            style={'width':'25%','margin-left':'38%','text-align':'center'}
+        )
+        
+        ],
+        ),
+        style={'width':'100%','background-color':'#D0D0CE'}
+    )
+
+
+
+    return html.Div(res)
+
+
+### plot 
+country = list(data_read_run['country'])
+country_u= list(set(list(data_read_run['country'])) - {'-1'})
+country_u.sort()
+def map():
+    fig = html.Div([
+        html.Div(
+            dcc.Dropdown(
+                id='dropdown-country',
+                options=[{'label': c, 'value': c} for c in country_u],
+                multi=True,
+                placeholder='Select countries ...',
+                style={'width': '100%'}
+            ),
+            style={'width': '100%'}
+        ),
+        dcc.Graph(id='dropdown-fig')
+    ])
+    return fig
+
+
+
+##### instrument platform
+
+def platfrom ():
+    fig = generalStatistics.piePlatform(list(data_read_run['instrument_platform']))
+    fig = html.Div([html.P('Data hub holdings composition: Instrument Platform'),
+        dcc.Graph(figure=fig)],
+        style={
+            'display': 'flex',
+            'align-items': 'center',
+            'justify-content': 'center',
+            'flex-direction': 'column',
+        }
+        )
+    return fig
+
+#####  evolution of submissions
+def submissionsEvo():
+    fig1 , fig2= generalStatistics.submissionsEvo(data_read_run,data_analysis,username)
+    return html.Div([
+                    dbc.Row([
+                        dbc.Col([dcc.Graph(figure=fig1),], width=6),
+                        dbc.Col([dcc.Graph(figure=fig2),], width=6)
+                    ])
+                     ])
+
+
+### tabs
+
+tabs = dbc.Tabs(
+    [
+        dbc.Tab(label="Summary",tab_id = 'tab_1',style={'font-size': '20px'}),
+        dbc.Tab( label="Status Report",tab_id = 'tab_2',style={'font-size': '20px'})
+    ],
+    id="tabs",
+    active_tab="tab_1",
+    style={'font-size': '20px'}
+)
+
+### summay
+def summay():
+    res = html.Div([
+            dbc.Row([
+            dbc.Col([map(),], width=8),
+            dbc.Col([platfrom(),], width=4)
+            ]),
+            submissionsEvo(),
+    ])
+    return res
+
+#### Status repport
+
+def status_report():
+    return html.P('For Zahra')
+
+############### Body
+
+body = html.Div([
+    html.Div([
+        header(),
+        statistics(),
+        html.Hr(),
+        html.Div([
+           tabs,
+            html.Div(id = 'tab_content'), 
+        ],
+            style={'width' : '90%','margin-left':'5%','text-align':'center'}
+        )
+
+    ])
+])
+
+
+########## app
+
+external_stylesheets = [
+    dbc.themes.BOOTSTRAP,
+    #'static/main.css'
+]
+app = DjangoDash('ena_datahub_dashboard', external_stylesheets=external_stylesheets,
+                suppress_callback_exceptions=True,
+                )
+app.layout = html.Div(
+        children=[
+            body, 
+            html.Br(),
+            html.Br(),
+            html.Br(),
+
+        ], 
+        style= {'width' : '100%',"font-family": "IBM Plex Sans"}
+    )
+
+#### @ app tabs
+
+@app.callback(Output("tab_content", "children"),
+              [Input("tabs", "active_tab")]
+              )
+def switch_tab(at) :
+    if at == 'tab_1':
+        return summay() 
+    elif at == 'tab_2':
+        return status_report() 
+
+#### @app map
+@app.callback(
+    Output('dropdown-fig', 'figure'),
+    Input('dropdown-country', 'value'),
+)
+def update_output(selected_countries):
+    if (selected_countries is None) or (len(selected_countries) == 0):
+        data_map = geoM.df_map(country)
+        fig1 = geoM.Choropleth_map(data_map)
+        return fig1
+    else:
+        selected_countrie = []
+        for i in country:
+            if i in selected_countries:
+                selected_countrie.append(i)
+        data_map = geoM.df_map(selected_countrie)
+        fig1 = geoM.Choropleth_map(data_map)
+        return fig1
