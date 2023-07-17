@@ -71,7 +71,6 @@ class GetData :
         while username == '' or password == '' or username == 'None' or password == 'None':
             username = input('Username => ')
             password = getpass.getpass(prompt='Password => ')
-        print(password)
         return username, password
 
     
